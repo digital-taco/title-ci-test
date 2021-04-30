@@ -1,0 +1,67 @@
+# Actions define discrete stages of the CI
+actions:
+  install:
+    script:
+    # - find . -name ''node_modules'' -type d -prune -exec rm -rf ''{}'' +;
+    # - npm install
+    - echo "Running NPM install"
+
+  lint:
+    dep: install # requires that the @install step is valid
+    script:
+    # - npm run lint
+    - echo "Running Linter!"
+    changed:
+    - eslint ... # rest operator will insert the files that actually changed into that part of the command
+
+  build:
+    dep: lint # requires that the @lint (and implicitly @install) steps are valid
+    script:
+    # - npm run build
+    - echo "Running Build"
+
+  unitTest:
+    dep: build
+    script:
+    # - npm run test:ci
+    - echo "Running test:ci"
+
+  deploy:
+    dep: build
+    script:
+    # - npm run deploy
+    - echo "Running deploy"
+    - echo "this should fail" && exit 1
+
+  componentTest:
+    dep: deploy
+    script:
+    # - npm run test:component
+    - echo "Running componentTest"
+
+# triggers indicate what file changes trigger an invalid step
+triggers:
+  install:
+  - yarn.lock
+  - "**/package.json"
+
+  lint:
+  - src/**/*
+
+  build:
+  - src/**/*
+
+  unitTest:
+  - src/**/*.test.js
+
+  componentTest:
+  - src/**/*.spec.js
+
+# the order of commands for the initial run
+pipeline:
+  - install
+  - lint
+  - build
+  - unitTest
+  - deploy
+  - componentTest
